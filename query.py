@@ -4,10 +4,11 @@ import requests
 from bs4 import BeautifulSoup
 
 _site = 'text-lyrics.ru'
-__alphabet = dict(zip('abcdefghijklmnopqrstuvwxyz1234567890абвгдеёжзиклмнопрстуфчцчшщэюя', list('abcdefghijklmnopqrstuvwxyz1234567890') + 'a1 b1 v1 g1 d1 e1 e1 gg z1 i1 k1 l1 m1 n1 o1 p1 c1 t1 u1 f1 x1 z2 ch sh sh1 e2 yu i2'.split(' ')))
+__alphabet = dict(zip('abcdefghijklmnopqrstuvwxyz1234567890абвгдеёжзиклмнопрстуфхцчшщэюя', list('abcdefghijklmnopqrstuvwxyz1234567890') + 'a1 b1 v1 g1 d1 e1 e1 gg z1 i1 k1 l1 m1 n1 o1 p1 r1 c1 t1 u1 f1 x1 z2 ch sh sh1 e2 yu i2'.split(' ')))
 
 
 def artists(first_symbol):
+    first_symbol = __alphabet.get(first_symbol.lower())
     url = 'https://{}/{}.html'.format(_site, first_symbol)
     response = requests.get(url, timeout=1)
 
@@ -17,7 +18,7 @@ def artists(first_symbol):
 
 
 def compositions(artist):
-    url = artist if artist.find(_site) != -1 else artists(__alphabet.get(str(artist[0]).lower(), '_')).get(artist)
+    url = artist if artist.find(_site) != -1 else artists(str(artist[0])).get(artist)
     response = requests.get(url, timeout=1)
     url = url.replace('http', 'https')
 
