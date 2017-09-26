@@ -10,7 +10,7 @@ __alphabet = dict(zip('abcdefghijklmnopqrstuvwxyz1234567890абвгдеёжзи�
 def artists(first_symbol):
     first_symbol = __alphabet.get(first_symbol.lower())
     url = 'https://{}/{}.html'.format(_site, first_symbol)
-    response = requests.get(url, timeout=1)
+    response = requests.get(url, timeout=2)
 
     href = re.compile('^http://{}/{}/*'.format(_site, first_symbol))
     soup = BeautifulSoup(response.text, 'lxml').findAll('a', href=href)
@@ -19,8 +19,8 @@ def artists(first_symbol):
 
 def compositions(artist):
     url = artist if artist.find(_site) != -1 else artists(str(artist[0])).get(artist)
-    response = requests.get(url, timeout=1)
-    url = url.replace('http', 'https')
+    response = requests.get(url, timeout=2)
+    url = url.replace('http://', 'https://')
 
     href = re.compile('^{}*'.format(url))
     soup = BeautifulSoup(response.text, 'lxml').findAll('a', href=href)
@@ -35,25 +35,28 @@ def compositions(artist):
 
 
 def text(composition_link):
-    response = requests.get(composition_link, timeout=1)
+    response = requests.get(composition_link, timeout=2)
     soup = BeautifulSoup(response.text, 'lxml').find('div', id='entry_content')
 
     lines = ''
     for line in soup.contents:
-        if any(str(line).find(bad_word) != -1 for bad_word in ['(', '[', '{']):
-            continue
-
         if re.match(r'^<br.>', str(line)):
             lines += '\n'
             continue
 
         if re.match(r'^<a*', str(line)):
             line = line.text
+
+        for bad_symbol in ['(', '[', '{']:
+            if str(line).find(bad_symbol) != -1:
+                line = line[:line.find(bad_symbol):] + line[line.find(bad_symbol) + 1::]
+
         lines += str(line)
 
     result = ''
+    bad_words = ['Куплет:', 'Припев:', 'Аутро:', 'Премьера песни', 'Перед припевом:', 'Вступление:', 'Бридж:']
     for line in lines.split('\n'):
-        if any(str(line).find(bad_word) != -1 for bad_word in ['Куплет:', 'Припев:', 'Премьера песни']):
+        if any(str(line).find(bad_word) != -1 for bad_word in bad_words):
             continue
         result += str(line) + '\n'
 
