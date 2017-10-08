@@ -1,6 +1,15 @@
 # -*- coding: utf-8 -*-
+import os
 import json
-import query
+import parser
+
+
+def save_texts(texts, filename):
+    if not os.path.exists(os.path.dirname(filename)):
+        os.makedirs(os.path.dirname(filename))
+    with open(filename, 'wb') as json_file:
+        json_file.write(json.dumps(texts, indent=4, sort_keys=True).encode('UTF-8'))
+
 
 if __name__ == '__main__':
     artists = [
@@ -21,16 +30,11 @@ if __name__ == '__main__':
         'https://text-lyrics.ru/o/obladaet/',
         'https://text-lyrics.ru/m/markul/',
         'https://text-lyrics.ru/k1/kasta/',
-        'https://text-lyrics.ru/c1/slavakpss/'
+        'https://text-lyrics.ru/c1/slavakpss/',
+        'https://text-lyrics.ru/j/jubilee/',
+        'https://text-lyrics.ru/b/boulevard-depo/',
+        'https://text-lyrics.ru/t/thomas-mraz/'
     ]
 
-    texts = dict()
-    for index, artist in enumerate(artists):
-        print('{}/{} - {}'.format(index + 1, len(artists), artist.split('/')[-2]))
-        compositions = query.compositions(artist)
-        compositions_texts = query.all_texts(compositions)
-        texts.update(compositions_texts)
-
-    json_texts = json.dumps(texts, indent=4, sort_keys=True)
-    with open('texts.json', 'w') as json_file:
-        json_file.write(json_texts)
+    texts = parser.parse_artists(artists)
+    save_texts(texts, 'data/super_texts.json')
