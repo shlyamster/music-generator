@@ -9,10 +9,10 @@ class TextLyricsQuery(BaseQuery):
     def __init__(self):
         super().__init__()
         self._site = 'text-lyrics.ru'
-        self.__alphabet = dict(zip('abcdefghijklmnopqrstuvwxyz1234567890абвгдеёжзиклмнопрстуфхцчшщэюя', list('abcdefghijklmnopqrstuvwxyz1234567890') + 'a1 b1 v1 g1 d1 e1 e1 gg z1 i1 k1 l1 m1 n1 o1 p1 r1 c1 t1 u1 f1 x1 z2 ch sh sh1 e2 yu i2'.split(' ')))
+        self._alphabet = dict(zip('abcdefghijklmnopqrstuvwxyz1234567890абвгдеёжзиклмнопрстуфхцчшщэюя', list('abcdefghijklmnopqrstuvwxyz1234567890') + 'a1 b1 v1 g1 d1 e1 e1 gg z1 i1 k1 l1 m1 n1 o1 p1 r1 c1 t1 u1 f1 x1 z2 ch sh sh1 e2 yu i2'.split(' ')))
 
     def artists(self, first_symbol: str) -> {str: str}:
-        first_symbol = self.__alphabet.get(first_symbol.lower())
+        first_symbol = self._alphabet.get(first_symbol.lower())
         url = 'https://{}/{}.html'.format(self._site, first_symbol)
         response = requests.get(url, timeout=self._timeout)
 
@@ -44,19 +44,29 @@ class TextLyricsQuery(BaseQuery):
 
         return result
 
-    def text(self, composition_link: str) -> str:
+    def text(self, composition_link: str) -> {str: [str]}:
         response = requests.get(composition_link, timeout=self._timeout)
-        soup = BeautifulSoup(response.text, 'lxml').find('div', id='entry_content')
+        soup = BeautifulSoup(response.text, 'lxml')
 
-        result = ''
-        for line in soup.contents:
-            if re.match(r'^<br.>', str(line)):
-                result += '\n'
-                continue
+        if soup.find('a', href='https://text-lyrics.ru/translate/'):
+            return None
 
-            if re.match(r'^<a*', str(line)):
-                line = line.text
+        def parse_lines(lines):
+            res = u''
+            for line in lines:
+                if re.match(r'<p>', str(line)):
+                    res += parse_lines(line)
+                    continue
 
-            result += str(line)
+                if re.match(r'<br.>', str(line)):
+                    res += '\n'
+                    continue
 
-        return result
+                if re.match(r'<a*', str(line)):
+                    line = line.text
+
+                res += str(line)
+            return res
+
+        text = parse_lines(soup.find('div', id='entry_content').contents)
+        return text
