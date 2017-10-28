@@ -1,0 +1,4 @@
+pymorphy2
+rutermextract
+requests
+beautifulsoup4
